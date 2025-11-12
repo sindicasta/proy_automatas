@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validador de Autómatas (AFD)</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <h1>Validador de Cadenas (AFD Manual)</h1>
+    <form id="validationForm">
+        <label for="textToValidate">Cadena a Validar:</label>
+        <input type="text" id="textToValidate" placeholder="Escribe aquí..." required>
+
+        <label for="validationType">Tipo de Autómata:</label>
+        <select id="validationType">
+            <option value="NUMERIC">Numérica ([0-9]+.)</option>
+            <option value="IDENTIFIER">Identificador</option>
+            <option value="UPPERCASE">Inicia con Mayúscula</option>
+        </select>
+
+        <button type="submit">Validar</button>
+    </form>
+
+    <hr>
+    <h3>Resultado:</h3>
+    <div id="resultBox">
+        </div>
+
+    <script src="/script.js"></script>
+</body>
+</html>
