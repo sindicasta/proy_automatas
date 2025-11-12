@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Método del Árbol</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--muted:#666;--accent:#ff9800;--ok:#4caf50}
+  body{font-family:Inter, system-ui, Arial; background:var(--bg); margin:0; padding:20px; color:#111}
+  .wrap{
+    max-width: 1400px; 
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column; 
+    gap: 20px;
+  }
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  h1{font-size:20px;margin:0}
+ 
+  .control-panel-section {
+    padding-bottom: 30px;
+  }
+
+  .expr-validation-container {
+    display: grid;
+    grid-template-columns: 2fr 3fr 1fr; 
+    gap: 20px;
+    align-items: flex-start;
+  }
+ 
+  .expr-info-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .validation-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .action-buttons-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-self: stretch; 
+    justify-content: flex-end; 
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    gap: 20px;
+    align-items: flex-start;
+  }
+ 
+  .section {
+    background: var(--card);
+    padding: 20px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(20,20,60,0.08); 
+    min-height: 200px;
+  }
+
+  #arbolSection { 
+    grid-column: 1 / -1; 
+    min-height: 400px;
+  }
+  #tableSection { 
+    grid-column: 1 / 2; 
+    min-height: 300px;
+  }
+  #dfaSection { 
+    grid-column: 2 / 3; 
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #dfaWrap {
+    width: 100%;
+    display: flex;
+    justify-content: center; 
+  }
+
+  input[readonly], input[type="text"]{
+    width:100%;
+    padding:8px;
+    border-radius:6px;
+    border:1px solid #e6e6e6;
+    background:#fafafa;
+    box-sizing: border-box; 
+  }
+
+  #validationResult {
+    margin-top: 10px;
+    text-align: left;
+    white-space: pre-wrap;
+    max-height: 100px; 
+    overflow-y: auto;
+    border: 1px solid #eee;
+    padding: 5px;
+    border-radius: 4px;
+    background: #fcfcfc;
+    font-size: 13px;
+  }
+
+  #canvas svg {
+    display: block;
+    width: 100%; 
+    height: auto;
+  }
+
+  button{
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 0;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    width: 100%; 
+  }
+ 
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+  th,td{border:1px solid #eee;padding:8px;text-align:left}
+  th{background:#f0f0f0; font-weight: 700;}
+ 
+  .error-text { color: #b91c1c; font-weight: bold; }
+  .success-text { color: #10b981; font-weight: bold; }
+  .back {background:#6b7280}
+  .info{margin-top:8px;color:#444;font-size:13px}
+</style>
+</head>
+<body>
+
+<header style="max-width:1400px;margin:0 auto 8px">
+  <div>
+    <h1>Método del Árbol</h1>
+  </div>
+  <div>
+    <button onclick="volverMenu()" class="back">Volver al Menú</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="section control-panel-section">
+   
+    <div class="expr-validation-container">
+     
+      <div class="expr-info-area">
+        <label class="small">Expresión:</label>
+        <input id="exprInput" placeholder="Escribe la expresión aquí... (ej. (a+b)*a)"/>
+        <div class="info" id="infoText"></div>
+        <button onclick="buildAndRenderFromInput()" style="background:var(--accent); margin-top: 8px;">Generar Análisis</button>
+      </div>
+
+      <div class="validation-area">
+        <label class="small">Cadenas a validar (separadas por coma):</label>
+        <input type="text" id="chainInput" placeholder="a,b,ac,ε">
+        <div id="validationResult">Esperando cadenas...</div>
+      </div>
+     
+      <div class="action-buttons-area">
+        <button onclick="exportPDF()" style="background:#10b981;">Exportar a PDF</button>
+        <button onclick="validateChains()" style="background:#007bff;">Validar Cadenas</button>
+        <button onclick="clearValidation()" style="background:#808080;">Limpiar Validación</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="exportContent">
+    <div class="results-grid">
+      <div id="arbolSection" class="section">
+        <strong>Árbol de Análisis</strong>
+        <div id="canvas" style="margin-top:12px"></div>
+      </div>
+
+      <div id="tableSection" class="section">
+        <strong>Tabla</strong>
+        <div id="tableWrap"></div>
+      </div>
+     
+      <div id="dfaSection" class="section">
+        <strong>Diagrama Final</strong>
+        <div id="dfaWrap" style="margin-top:8px;min-height:160px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="tree.js"></script>
+
+</body>
+</html>

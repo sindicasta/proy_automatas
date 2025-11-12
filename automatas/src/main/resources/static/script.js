@@ -1,56 +1,73 @@
 // Espera a que todo el HTML esté cargado
 document.addEventListener("DOMContentLoaded", () => {
     
-    // 1. Obtenemos los elementos del formulario
+    // --- LÓGICA ORIGINAL DEL VALIDADOR ---
     const form = document.getElementById("validationForm");
     const textInput = document.getElementById("textToValidate");
     const typeSelect = document.getElementById("validationType");
     const resultBox = document.getElementById("resultBox");
 
-    // 2. Escuchamos el evento "submit" del formulario
-    form.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Evita que la página se recargue
+    if (form) {
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault(); // Evita que la página se recargue
 
-        // 3. Obtenemos los valores del usuario
-        const text = textInput.value;
-        const type = typeSelect.value;
+            const text = textInput.value;
+            const type = typeSelect.value;
+            const dataToSend = {
+                text: text,
+                validationType: type
+            };
 
-        // 4. Preparamos el objeto JSON que nuestra API espera
-        const dataToSend = {
-            text: text,
-            validationType: type
-        };
+            try {
+                const response = await fetch("/api/v1/validate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dataToSend)
+                });
+                const result = await response.json();
+                
+                // Esta función aplica los colores
+                displayResult(result); 
+                
+            } catch (error) {
+                console.error("Error al llamar a la API:", error);
+                resultBox.textContent = "Error: No se pudo conectar al servidor.";
+                resultBox.className = "error"; // Clase roja si falla la conexión
+            }
+        });
+    }
 
-        try {
-            // 5. ¡Llamamos a nuestra API de Spring Boot!
-            const response = await fetch("/api/v1/validate", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(dataToSend)
-            });
-
-            // 6. Convertimos la respuesta de JSON a un objeto
-            const result = await response.json();
-
-            // 7. Mostramos el resultado en pantalla
-            displayResult(result);
-
-        } catch (error) {
-            console.error("Error al llamar a la API:", error);
-            resultBox.textContent = "Error: No se pudo conectar al servidor.";
-            resultBox.className = "error";
-        }
-    });
-
-    // Función para mostrar el resultado
+    /**
+     * Esta es la función clave que cambia los colores.
+     * Añade la clase 'success' (verde) o 'error' (rojo) al 'resultBox'
+     * basado en la respuesta del backend.
+     */
     function displayResult(result) {
+        if (!resultBox) return;
         resultBox.textContent = result.message;
+        
         if (result.isValid) {
-            resultBox.className = "success"; // Aplica el CSS verde
+            // ACEPTADO: Pone la clase 'success' (verde)
+            resultBox.className = "success"; 
         } else {
-            resultBox.className = "error";   // Aplica el CSS rojo
+            // RECHAZADO: Pone la clase 'error' (rojo)
+            resultBox.className = "error";   
         }
+    }
+
+    // --- CÓDIGO PARA EL BOTÓN DE IR AL ÁRBOL ---
+    const goToTreeBtn = document.getElementById('goToTreeBtn');
+    
+    if (goToTreeBtn && textInput) {
+        goToTreeBtn.addEventListener('click', (event) => {
+            event.preventDefault(); 
+            
+            const regex = textInput.value;
+            const cleanRegex = regex.endsWith('.') ? regex.substring(0, regex.length - 1) : regex;
+            
+            localStorage.setItem('expresionParaArbol', cleanRegex);
+            
+            window.location.href = goToTreeBtn.href;
+        });
     }
 });
